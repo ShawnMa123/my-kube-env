@@ -1,0 +1,10 @@
+# 忽略 Git 相关的文件和目录
+.git
+.gitignore
+
+# 忽略 Docker 相关的文件
+.dockerignore
+Dockerfile
+
+# 忽略文档
+README.md
