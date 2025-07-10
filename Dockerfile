@@ -7,7 +7,7 @@ ARG KREW_VERSION=v0.4.4
 ARG HELM_VERSION=v3.15.2
 ARG K9S_VERSION=v0.32.5
 ARG STERN_VERSION=1.30.0
-ARG POPEYE_VERSION=v0.19.1
+# ARG POPEYE_VERSION=v0.19.1  <-- 注释掉或删除 Popeye 版本
 ARG FZF_VERSION=0.53.0
 
 # 设置 DEBIAN_FRONTEND 避免 apt-get 交互
@@ -40,17 +40,21 @@ RUN curl -fsSL https://pkgs.k8s.io/core:/stable:/v${KUBECTL_VERSION}/deb/Release
     apt-get update && \
     apt-get install -y kubectl
 
-# --- 4. 安装 "黄金套餐" 工具 (helm, k9s, stern, fzf, etc.) ---
+# --- 4. 安装 "黄金套餐" 工具 (已移除 Popeye) ---
 RUN set -eux; \
     ARCH=$(dpkg --print-architecture); \
-    # ... [此处内容与上一版完全相同，为简洁省略] ...
+    # Helm
     wget "https://get.helm.sh/helm-${HELM_VERSION}-linux-${ARCH}.tar.gz" -O helm.tar.gz && tar -zxvf helm.tar.gz && mv "linux-${ARCH}/helm" /usr/local/bin/helm && \
+    # k9s
     wget "https://github.com/derailed/k9s/releases/download/${K9S_VERSION}/k9s_Linux_${ARCH}.tar.gz" -O k9s.tar.gz && tar -zxvf k9s.tar.gz && mv k9s /usr/local/bin/k9s && \
+    # stern
     wget "https://github.com/stern/stern/releases/download/v${STERN_VERSION}/stern_${STERN_VERSION}_linux_${ARCH}.tar.gz" -O stern.tar.gz && tar -zxvf stern.tar.gz && mv stern /usr/local/bin/stern && \
+    # fzf
     wget "https://github.com/junegunn/fzf/releases/download/${FZF_VERSION}/fzf-${FZF_VERSION}-linux_${ARCH}.tar.gz" -O fzf.tar.gz && tar -zxvf fzf.tar.gz && mv fzf /usr/local/bin/fzf && \
+    # kubectx & kubens
     wget "https://github.com/ahmetb/kubectx/releases/download/v0.9.5/kubectx_v0.9.5_linux_x86_64.tar.gz" -O kubectx.tar.gz && tar -zxvf kubectx.tar.gz && mv kubectx /usr/local/bin/kubectx && \
     wget "https://github.com/ahmetb/kubectx/releases/download/v0.9.5/kubens_v0.9.5_linux_x86_64.tar.gz" -O kubens.tar.gz && tar -zxvf kubens.tar.gz && mv kubens /usr/local/bin/kubens && \
-    wget "https://github.com/derailed/popeye/releases/download/${POPEYE_VERSION}/popeye_Linux_x86_64.tar.gz" -O popeye.tar.gz && tar -zxvf popeye.tar.gz && mv popeye /usr/local/bin/popeye && \
+    # 清理下载的压缩包
     rm -f *.tar.gz
 
 # --- 5. 创建非 root 用户 ---
@@ -88,8 +92,7 @@ RUN ( \
     echo 'export PATH="${KREW_ROOT:-/home/dev/.krew}/bin:$PATH"' >> ~/.zshrc && \
     /bin/zsh -c "source ~/.zshrc && kubectl krew install oidc-login"
 
-# --- 10. 全新步骤：安装 OCI CLI (为 oulogin) ---
-# 我们使用官方安装脚本，并传入参数使其非交互式地运行
+# --- 10. 安装 OCI CLI (为 oulogin) ---
 RUN bash -c "$(curl -L https://raw.githubusercontent.com/oracle/oci-cli/master/scripts/install/install.sh)" -- \
     --accept-all-defaults \
     --exec-dir /home/dev/bin \
